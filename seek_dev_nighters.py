@@ -3,26 +3,25 @@ import pytz
 import requests
 
 
-def get_pages_count():
-    parameters = {"page": 1}
-    r = requests.get(
+def request_to_devman(page_number):
+    parameters = {"page": page_number}
+    returned_data = requests.get(
         'https://devman.org/api/challenges/solution_attempts/',
         params=parameters
     )
-    count = r.json()['number_of_pages']
-    return count
+    return returned_data
 
 
-def load_attempts(pages_count):
+def load_attempts():
     all_data = []
-    for page in range(pages_count):
-        parameters = {"page": page+1}
-        r = requests.get(
-            'https://devman.org/api/challenges/solution_attempts/',
-            params=parameters
-        )
-        if r.status_code == 200:
-            all_data.append(r.json()['records'])
+    first_page = 1
+    first_page_data = request_to_devman(first_page)
+    pages_count = first_page_data.json()['number_of_pages']
+    all_data.append(first_page_data.json()['records'])
+    for page in range(first_page, pages_count):
+        page_data = request_to_devman(page+1)
+        if page_data.status_code == 200:
+            all_data.append(page_data.json()['records'])
     return all_data
 
 
@@ -42,8 +41,7 @@ def print_midnighters(data):
 
 if __name__ == '__main__':
     pages_data = []
-    count_of_pages = get_pages_count()
-    pages_data = load_attempts(count_of_pages)
+    pages_data = load_attempts()
     print("Совы:")
     for records in pages_data:
         print_midnighters(records)
